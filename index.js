@@ -25,6 +25,12 @@ app.post('/api/persons', (request, response) => {
       message: `Missing arguments 'name' or 'number'`
     })
   }
+  if (data.find(element => element.name === request.body.name)) {
+    return response.status(400).json({
+      status: 'error',
+      message: `The name already exists in the phonebook`
+    })
+  }
   const newId = getRandomInt(50000)
   if (data.find(element => element.id === newId)) {
     return response.status(400).json({
