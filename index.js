@@ -5,7 +5,7 @@ const cors = require('cors')
 
 
 morgan.token('body', (req, res) => {
-  if (req.method === 'POST') {
+  if (req.method === 'POST' || req.method === 'PUT') {
     return JSON.stringify(req.body)
   } else {
     return ' '
@@ -16,6 +16,7 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+app.use('/', express.static('dist'))
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -60,11 +61,7 @@ app.post('/api/persons', (request, response) => {
     number: request.body.number
   }
   data = data.concat(newPerson)
-  response.status(200).json({
-    status: 'success',
-    message: 'New data created',
-    data: newPerson
-  })
+  response.status(200).json(newPerson)
 })
 
 app.get('/api/persons/:id', (request, response) => {
@@ -73,6 +70,43 @@ app.get('/api/persons/:id', (request, response) => {
 
   if (found) {
     response.status(200).json(found)
+  } else {
+    response.status(404).json({
+      status: 'error',
+      message: `No data corresponds to id: ${id}`
+    })
+  }
+})
+
+app.put('/api/persons/:id', (request, response) => {
+  const id = Number(request.params.id)
+  const found = data.findIndex(element => element.id === id)
+
+  if (found !== -1) {
+    if (!request.body.name || !request.body.number) {
+      return response.status(400).json({
+        status: 'error',
+        message: `Missing arguments 'name' or 'number'`
+      })
+    }
+    if (data.find(element => (element.name === request.body.name && element.id !== id))) {
+      return response.status(400).json({
+        status: 'error',
+        message: `The name already exists in the phonebook`
+      })
+    }
+  
+    const newPerson = {
+      id: id,
+      name: request.body.name,
+      number: request.body.number
+    }
+    data[found] = newPerson
+    response.status(200).json({
+      status: 'success',
+      message: 'New data updated',
+      data: newPerson
+    })
   } else {
     response.status(404).json({
       status: 'error',
