@@ -5,12 +5,14 @@ var { data } = require('./data')
 const PORT = 3001
 const app = express()
 
+morgan.token('body', (req, res) => JSON.stringify(req.body))
+
+app.use(express.json())
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
-
-app.use(express.json())
-app.use(morgan('tiny'))
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
