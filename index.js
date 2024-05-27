@@ -1,4 +1,5 @@
 const express = require('express')
+var morgan = require('morgan')
 var { data } = require('./data')
 
 const PORT = 3001
@@ -9,6 +10,7 @@ function getRandomInt(max) {
 }
 
 app.use(express.json())
+app.use(morgan('tiny'))
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
