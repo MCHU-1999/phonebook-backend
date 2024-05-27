@@ -4,6 +4,10 @@ var { data } = require('./data')
 const PORT = 3001
 const app = express()
 
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
 app.use(express.json())
 
 app.get('/', (request, response) => {
@@ -12,6 +16,34 @@ app.get('/', (request, response) => {
 
 app.get('/api/persons', (request, response) => {
   response.status(200).json(data)
+})
+
+app.post('/api/persons', (request, response) => {
+  if (!request.body.name || !request.body.number) {
+    return response.status(400).json({
+      status: 'error',
+      message: `Missing arguments 'name' or 'number'`
+    })
+  }
+  const newId = getRandomInt(50000)
+  if (data.find(element => element.id === newId)) {
+    return response.status(400).json({
+      status: 'error',
+      message: `Duplicated id, try again`
+    })
+  }
+
+  const newPerson = {
+    id: newId,
+    name: request.body.name,
+    number: request.body.number
+  }
+  data = data.concat(newPerson)
+  response.status(200).json({
+    status: 'success',
+    message: 'New data created',
+    data: newPerson
+  })
 })
 
 app.get('/api/persons/:id', (request, response) => {
