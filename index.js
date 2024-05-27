@@ -1,5 +1,5 @@
 const express = require('express')
-const { data } = require('./data')
+var { data } = require('./data')
 
 const PORT = 3001
 const app = express()
@@ -20,6 +20,22 @@ app.get('/api/persons/:id', (request, response) => {
 
   if (found) {
     response.status(200).json(found)
+  } else {
+    response.status(404).json({
+      status: 'error',
+      message: `No data corresponds to id: ${id}`
+    })
+  }
+})
+
+app.delete('/api/persons/:id', (request, response) => {
+  const id = Number(request.params.id)
+  const found = data.find(element => element.id === id)
+
+  data = data.filter(element => element.id !== id)
+
+  if (found) {
+    response.status(204).end()
   } else {
     response.status(404).json({
       status: 'error',
