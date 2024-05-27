@@ -1,12 +1,21 @@
 const express = require('express')
 var morgan = require('morgan')
 var { data } = require('./data')
+const cors = require('cors')
+
 
 const PORT = 3001
 const app = express()
 
-morgan.token('body', (req, res) => JSON.stringify(req.body))
+morgan.token('body', (req, res) => {
+  if (req.method === 'POST') {
+    return JSON.stringify(req.body)
+  } else {
+    return ' '
+  }
+})
 
+app.use(cors())
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
@@ -16,6 +25,10 @@ function getRandomInt(max) {
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
+})
+
+app.get('/healthz', (request, response) => {
+  response.status(200).end()
 })
 
 app.get('/api/persons', (request, response) => {
