@@ -1,34 +1,8 @@
 const express = require('express')
 var morgan = require('morgan')
-var { data } = require('./data')
+// var { data } = require('./data')
 const cors = require('cors')
-
-const { MongoClient, ServerApiVersion } = require('mongodb');
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
-
-
+const Person = require('./models/person')
 
 morgan.token('body', (req, res) => {
   if (req.method === 'POST' || req.method === 'PUT') {
@@ -44,9 +18,9 @@ app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 app.use('/', express.static('dist'))
 
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
-}
+// function getRandomInt(max) {
+//   return Math.floor(Math.random() * max);
+// }
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
@@ -57,7 +31,14 @@ app.get('/healthz', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-  response.status(200).json(data)
+  Person.find({}).then(people => {
+    response.status(200).json(people)
+  }).catch(error => {
+    response.status(400).json({
+      status: 'error',
+      message: error.message
+    })
+  })
 })
 
 app.post('/api/persons', (request, response) => {
@@ -67,98 +48,64 @@ app.post('/api/persons', (request, response) => {
       message: `Missing arguments 'name' or 'number'`
     })
   }
-  if (data.find(element => element.name === request.body.name)) {
-    return response.status(400).json({
-      status: 'error',
-      message: `The name already exists in the phonebook`
-    })
-  }
-  const newId = getRandomInt(50000)
-  if (data.find(element => element.id === newId)) {
-    return response.status(400).json({
-      status: 'error',
-      message: `Duplicated id, try again`
-    })
-  }
-
-  const newPerson = {
-    id: newId,
-    name: request.body.name,
-    number: request.body.number
-  }
-  data = data.concat(newPerson)
-  response.status(200).json(newPerson)
-})
-
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const found = data.find(element => element.id === id)
-
-  if (found) {
-    response.status(200).json(found)
-  } else {
-    response.status(404).json({
-      status: 'error',
-      message: `No data corresponds to id: ${id}`
-    })
-  }
-})
-
-app.put('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const found = data.findIndex(element => element.id === id)
-
-  if (found !== -1) {
-    if (!request.body.name || !request.body.number) {
-      return response.status(400).json({
-        status: 'error',
-        message: `Missing arguments 'name' or 'number'`
-      })
-    }
-    if (data.find(element => (element.name === request.body.name && element.id !== id))) {
+  Person.find({ name: request.body.name }).then(person => {
+    // console.log("person", person)
+    if (person.length !== 0) {
       return response.status(400).json({
         status: 'error',
         message: `The name already exists in the phonebook`
       })
+    } else {
+      const newPerson = new Person({
+        name: request.body.name,
+        number: request.body.number
+      })
+      newPerson.save().then(saved => {
+        response.json(saved)
+      })
     }
-  
-    const newPerson = {
-      id: id,
-      name: request.body.name,
-      number: request.body.number
-    }
-    data[found] = newPerson
-    response.status(200).json({
-      status: 'success',
-      message: 'New data updated',
-      data: newPerson
-    })
-  } else {
-    response.status(404).json({
+  }).catch(error => {
+    return response.status(400).json({
       status: 'error',
-      message: `No data corresponds to id: ${id}`
+      message: error.message
     })
-  }
+  })
+})
+
+app.get('/api/persons/:id', (request, response) => {
+  Person.findById(request.params.id).then(person => {
+    if (person) {
+      response.json(person)
+    } else {
+      response.status(400).json({
+        status: 'error',
+        message: `No data corresponds to id: ${request.params.id}`
+      })
+    }
+  }).catch(error => {
+    response.status(400).json({
+      status: 'error',
+      message: error.message
+    })
+  })
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const found = data.find(element => element.id === id)
-
-  data = data.filter(element => element.id !== id)
-
-  if (found) {
-    response.status(204).end()
-  } else {
-    response.status(404).json({
+  Person.findByIdAndDelete(request.params.id).then(result => {
+    response.json(result)
+    // response.status(204).end()
+  }).catch(error => {
+    response.status(400).json({
       status: 'error',
-      message: `No data corresponds to id: ${id}`
+      message: error.message
     })
-  }
+  })
 })
 
 app.get('/info', (request, response) => {
-  response.send(`<p>Phonebook has info for ${data.length} people</p><p>${Date().toString()}</p>`)
+  Person.find({}).then(people => {
+    response.send(`<p>Phonebook has info for ${people.length} people</p><p>${Date().toString()}</p>`)
+  })
 })
 
 
