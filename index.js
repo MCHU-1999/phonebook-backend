@@ -23,6 +23,12 @@ app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
 })
 
+app.get('/info', (request, response) => {
+  Person.find({}).then(people => {
+    response.send(`<p>Phonebook has info for ${people.length} people</p><p>${Date().toString()}</p>`)
+  })
+})
+
 app.get('/healthz', (request, response) => {
   response.status(200).end()
 })
@@ -83,10 +89,24 @@ app.delete('/api/persons/:id', (request, response, next) => {
   .catch(error => next(error))
 })
 
-app.get('/info', (request, response) => {
-  Person.find({}).then(people => {
-    response.send(`<p>Phonebook has info for ${people.length} people</p><p>${Date().toString()}</p>`)
-  })
+app.put('/api/persons/:id', (request, response, next) => {
+  if (!request.body.name || !request.body.number) {
+    return response.status(422).json({
+      status: 'error',
+      message: `Missing arguments 'name' or 'number'`
+    })
+  }
+
+  const newPerson = {
+    name: request.body.name,
+    number: request.body.number,
+  }
+
+  Person.findByIdAndUpdate(request.params.id, newPerson, { new: true })
+    .then(updatedPerson => {
+      response.json(updatedPerson)
+    })
+    .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {
