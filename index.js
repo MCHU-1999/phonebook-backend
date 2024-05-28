@@ -18,9 +18,6 @@ app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 app.use('/', express.static('dist'))
 
-// function getRandomInt(max) {
-//   return Math.floor(Math.random() * max);
-// }
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
@@ -30,20 +27,16 @@ app.get('/healthz', (request, response) => {
   response.status(200).end()
 })
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
   Person.find({}).then(people => {
     response.status(200).json(people)
-  }).catch(error => {
-    response.status(400).json({
-      status: 'error',
-      message: error.message
-    })
   })
+  .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   if (!request.body.name || !request.body.number) {
-    return response.status(500).json({
+    return response.status(422).json({
       status: 'error',
       message: `Missing arguments 'name' or 'number'`
     })
@@ -51,7 +44,7 @@ app.post('/api/persons', (request, response) => {
   Person.find({ name: request.body.name }).then(person => {
     // console.log("person", person)
     if (person.length !== 0) {
-      return response.status(500).json({
+      return response.status(409).json({
         status: 'error',
         message: `The name already exists in the phonebook`
       })
@@ -64,15 +57,11 @@ app.post('/api/persons', (request, response) => {
         response.json(saved)
       })
     }
-  }).catch(error => {
-    return response.status(500).json({
-      status: 'error',
-      message: error.message
-    })
   })
+  .catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
   Person.findById(request.params.id).then(person => {
     if (person) {
       response.json(person)
@@ -82,24 +71,16 @@ app.get('/api/persons/:id', (request, response) => {
         message: `No data corresponds to id: ${request.params.id}`
       })
     }
-  }).catch(error => {
-    response.status(400).json({
-      status: 'error',
-      message: 'malformatted id'
-    })
   })
+  .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id).then(result => {
     response.json(result)
     // response.status(204).end()
-  }).catch(error => {
-    response.status(500).json({
-      status: 'error',
-      message: error.message
-    })
   })
+  .catch(error => next(error))
 })
 
 app.get('/info', (request, response) => {
@@ -108,7 +89,27 @@ app.get('/info', (request, response) => {
   })
 })
 
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ status: 'error', message: 'unknown endpoint' })
+}
 
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.name)
+
+  if (error.name === 'CastError') {
+    // console.log('CastError');
+    return response.status(400).send({ status: 'error', message: 'malformatted id' })
+  } else {
+    // console.log({ status: 'error', message: error.message });
+    // return response.status(400).send({ status: 'error', message: error.message })
+  }
+
+  next(error)
+}
+// this has to be the last loaded middleware, also all the routes should be registered before this!
+app.use(errorHandler)
 
 // ---------------------------------------------------------
 const PORT = process.env.PORT || 3001
