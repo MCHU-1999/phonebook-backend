@@ -43,7 +43,7 @@ app.get('/api/persons', (request, response) => {
 
 app.post('/api/persons', (request, response) => {
   if (!request.body.name || !request.body.number) {
-    return response.status(400).json({
+    return response.status(500).json({
       status: 'error',
       message: `Missing arguments 'name' or 'number'`
     })
@@ -51,7 +51,7 @@ app.post('/api/persons', (request, response) => {
   Person.find({ name: request.body.name }).then(person => {
     // console.log("person", person)
     if (person.length !== 0) {
-      return response.status(400).json({
+      return response.status(500).json({
         status: 'error',
         message: `The name already exists in the phonebook`
       })
@@ -65,7 +65,7 @@ app.post('/api/persons', (request, response) => {
       })
     }
   }).catch(error => {
-    return response.status(400).json({
+    return response.status(500).json({
       status: 'error',
       message: error.message
     })
@@ -77,13 +77,13 @@ app.get('/api/persons/:id', (request, response) => {
     if (person) {
       response.json(person)
     } else {
-      response.status(400).json({
+      response.status(500).json({
         status: 'error',
         message: `No data corresponds to id: ${request.params.id}`
       })
     }
   }).catch(error => {
-    response.status(400).json({
+    response.status(500).json({
       status: 'error',
       message: error.message
     })
@@ -95,7 +95,7 @@ app.delete('/api/persons/:id', (request, response) => {
     response.json(result)
     // response.status(204).end()
   }).catch(error => {
-    response.status(400).json({
+    response.status(500).json({
       status: 'error',
       message: error.message
     })
