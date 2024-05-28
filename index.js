@@ -72,10 +72,7 @@ app.get('/api/persons/:id', (request, response, next) => {
     if (person) {
       response.json(person)
     } else {
-      response.status(404).json({
-        status: 'error',
-        message: `No data corresponds to id: ${request.params.id}`
-      })
+      response.status(404).end()
     }
   })
   .catch(error => next(error))
