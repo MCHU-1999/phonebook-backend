@@ -77,15 +77,15 @@ app.get('/api/persons/:id', (request, response) => {
     if (person) {
       response.json(person)
     } else {
-      response.status(500).json({
+      response.status(404).json({
         status: 'error',
         message: `No data corresponds to id: ${request.params.id}`
       })
     }
   }).catch(error => {
-    response.status(500).json({
+    response.status(400).json({
       status: 'error',
-      message: error.message
+      message: 'malformatted id'
     })
   })
 })
