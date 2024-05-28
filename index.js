@@ -34,52 +34,56 @@ app.get('/healthz', (request, response) => {
 })
 
 app.get('/api/persons', (request, response, next) => {
-  Person.find({}).then(people => {
-    response.status(200).json(people)
-  })
-  .catch(error => next(error))
+  Person.find({})
+    .then(people => {
+      response.status(200).json(people)
+    })
+    .catch(error => next(error))
 })
 
 app.post('/api/persons', (request, response, next) => {
-  Person.find({ name: request.body.name }).then(person => {
-    // console.log("person", person)
-    if (person.length !== 0) {
-      return response.status(409).json({
-        status: 'error',
-        message: `The name already exists in the phonebook`
-      })
-    } else {
-      const newPerson = new Person({
-        name: request.body.name,
-        number: request.body.number
-      })
-      newPerson.save()
-      .then(saved => {
-        response.json(saved)
-      })
-      .catch(error => next(error))
-    }
-  })
-  .catch(error => next(error))
+  Person.find({ name: request.body.name })
+    .then(person => {
+      // console.log("person", person)
+      if (person.length !== 0) {
+        return response.status(409).json({
+          status: 'error',
+          message: 'The name already exists in the phonebook'
+        })
+      } else {
+        const newPerson = new Person({
+          name: request.body.name,
+          number: request.body.number
+        })
+        newPerson.save()
+          .then(saved => {
+            response.json(saved)
+          })
+          .catch(error => next(error))
+      }
+    })
+    .catch(error => next(error))
 })
 
 app.get('/api/persons/:id', (request, response, next) => {
-  Person.findById(request.params.id).then(person => {
-    if (person) {
-      response.json(person)
-    } else {
-      response.status(404).end()
-    }
-  })
-  .catch(error => next(error))
+  Person.findById(request.params.id)
+    .then(person => {
+      if (person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
-  Person.findByIdAndDelete(request.params.id).then(result => {
-    response.json(result)
-    // response.status(204).end()
-  })
-  .catch(error => next(error))
+  Person.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.json(result)
+      // response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 app.put('/api/persons/:id', (request, response, next) => {

@@ -27,7 +27,7 @@ if (process.argv.length === 3) {
   const name = process.argv[3]
   const number = process.argv[4]
   if (!name || !number) {
-    console.log("missing arguments 'name' or 'number'")
+    console.log('missing arguments name or number')
     process.exit(1)
   }
   const person = new Person({ name, number })
