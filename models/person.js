@@ -18,7 +18,6 @@ mongoose.connect(url)
     name: String,
     number: String,
   })
-  // const Person = mongoose.model('Person', personSchema)
 
   personSchema.set('toJSON', {
   transform: (document, returnedObject) => {
